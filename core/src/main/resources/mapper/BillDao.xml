@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.lzh.financial.code.dao.BillDao">
+
+    <resultMap type="com.lzh.financial.code.domain.entity.Bill" id="BillMap">
+        <result property="bid" column="bid" jdbcType="INTEGER"/>
+        <result property="uid" column="uid" jdbcType="INTEGER"/>
+        <result property="accountId" column="account_id" jdbcType="BIGINT"/>
+        <result property="amount" column="amount" jdbcType="DECIMAL"/>
+        <result property="balance" column="balance" jdbcType="DECIMAL"/>
+        <result property="remark" column="remark" jdbcType="VARCHAR"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="createBy" column="create_by" jdbcType="VARCHAR"/>
+        <result property="tagId" column="tag_id" jdbcType="INTEGER"/>
+        <result property="categoryId" column="category_id" jdbcType="INTEGER"/>
+<!--        <result property="" column="account_type" jdbcType="INTEGER"/>-->
+        <result property="recordTime" column="record_time" jdbcType="TIMESTAMP"/>
+        <result property="delFlag" column="del_flag" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <select id="listRecord" resultType="com.lzh.financial.code.domain.vo.BillVo">
+        SELECT bill.bid,tag.tag_name,category.`name` type,account.`name` accountName,record_time,bill.amount
+        FROM tag,category,account,bill
+        WHERE bill.account_id=account.id AND bill.category_id=category.id AND bill.tag_id=tag.id
+    </select>
+   
+</mapper>
+

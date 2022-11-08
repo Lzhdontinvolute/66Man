@@ -15,8 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -26,8 +28,6 @@ public class LoginServiceImpl implements LoginService {
 
     @Autowired
     private AuthenticationManager authenticationManager;
-
-
 
     @Autowired
     private RedisCache redisCache;
@@ -48,10 +48,25 @@ public class LoginServiceImpl implements LoginService {
         Long uid = loginUser.getUser().getUid();
         String token = JwtUtil.createJWT(uid.toString());
         //loginUser存入redis缓存，token返回给前端
-        redisCache.setCacheObject("login"+uid,loginUser,30, TimeUnit.MINUTES);
+        redisCache.setCacheObject("login:"+uid,loginUser);
+//        redisCache.setCacheObject("login:"+uid,loginUser,30, TimeUnit.MINUTES);
         HashMap<String, String> map = new HashMap<>();
         map.put("token",token);
         return ResponseResult.okResult(map);
     }
+
+    @Override
+    public ResponseResult logout() {
+
+        //获取token
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        LoginUser loginUser = (LoginUser) authentication.getPrincipal();
+        //解析token来获取userid
+        Long userid = loginUser.getUser().getUid();
+        //删除redis中的记录
+        redisCache.deleteObject("login:"+userid);
+        return ResponseResult.okResult();
+    }
+
 
 }

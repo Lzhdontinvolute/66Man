@@ -1,10 +1,15 @@
 package com.lzh.financial.code.domain.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.extension.activerecord.Model;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.sql.Date;
+import java.util.Date;
 
 /**
  * (User)表实体类
@@ -13,9 +18,12 @@ import java.sql.Date;
  * @since 2022-10-04 20:25:39
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 @SuppressWarnings("serial")
 public class User extends Model<User> {
     //用户id
+    @TableId
     private Long uid;
     //用户名
     private String username;
@@ -35,11 +43,17 @@ public class User extends Model<User> {
     private Integer type;
     //手机号
     private String phoneNumber;
-    //
+
+    @TableField(fill = FieldFill.INSERT)
     private Date createTime;
-    //
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private Date updateTime;
-    //
+
+    @TableField(fill = FieldFill.INSERT)
+    private String delFlag;
+
+    @TableField(fill = FieldFill.INSERT_UPDATE)
     private String updateBy;
 
 

@@ -5,4 +5,6 @@ import com.lzh.financial.code.domain.dto.UserLoginDto;
 
 public interface LoginService {
     ResponseResult login(UserLoginDto userLoginDto);
+
+    ResponseResult logout();
 }

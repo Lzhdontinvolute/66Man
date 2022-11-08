@@ -4,6 +4,7 @@ import com.lzh.financial.code.domain.ResponseResult;
 import com.lzh.financial.code.domain.dto.UserRegisterDto;
 import com.lzh.financial.code.domain.vo.UserInfoVo;
 import com.lzh.financial.code.service.UserService;
+import io.swagger.annotations.Api;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping
+@Api(tags = "注册")
 public class RegisterController {
     @Autowired
     private UserService userService;

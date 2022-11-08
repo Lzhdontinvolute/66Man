@@ -1,5 +1,8 @@
 package com.lzh.financial.code.config;
 
+import com.lzh.financial.code.filter.JwtAuthenticationTokenFilter;
+import com.lzh.financial.code.handler.security.AccessDeniedHandlerImpl;
+import com.lzh.financial.code.handler.security.AuthenticationEntryPointImpl;
 import com.lzh.financial.code.service.impl.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +20,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.jws.Oneway;
 
@@ -25,6 +29,14 @@ import javax.jws.Oneway;
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 
+    @Autowired
+    private JwtAuthenticationTokenFilter filter;
+
+    @Autowired
+    private AuthenticationEntryPointImpl authenticationEntryPoint;
+
+    @Autowired
+    private AccessDeniedHandlerImpl accessDeniedHandler;
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
@@ -41,8 +53,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http.csrf().disable();
-        http.cors();
         http
                 //关闭csrf
                 .csrf().disable()
@@ -52,12 +62,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 // 对于登录接口 允许匿名访问
                 .antMatchers("/user/login").anonymous()
+                .antMatchers("/user/register").anonymous()
 //                .antMatchers("/logout").authenticated()
 //                .antMatchers("/user/userInfo").authenticated()
 //                .antMatchers("/upload").authenticated()
                 // 除上面外的所有请求全部不需要认证即可访问
+                .antMatchers("/v2/api-docs", "/swagger-resources/configuration/ui",
+                        "/swagger-resources", "/swagger-resources/configuration/security",
+                        "/swagger-ui.html", "/webjars/**").permitAll()
                 .anyRequest().authenticated();
 
+
+        //配置异常处理器
+        http.exceptionHandling()
+                .authenticationEntryPoint(authenticationEntryPoint)
+                .accessDeniedHandler(accessDeniedHandler);
+
         http.logout().disable();
+        //允许跨域
+        http.cors();
+        http.addFilterBefore(filter, UsernamePasswordAuthenticationFilter.class);
     }
 }
