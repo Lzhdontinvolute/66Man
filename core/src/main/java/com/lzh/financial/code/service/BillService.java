@@ -24,5 +24,13 @@ public interface BillService extends IService<Bill> {
     ResponseResult queryRecordById(Integer id);
 
     ResponseResult updateRecord(UpdateBillDto billDto);
+
+    ResponseResult getCurMonthOutcome();
+
+    ResponseResult getCurMonthRecord();
+
+    ResponseResult getMonthRecord(String date);
+
+    ResponseResult getRecordByAccount(Long aid);
 }
 

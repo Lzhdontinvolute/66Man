@@ -50,4 +50,28 @@ public class RecordController {
     public  ResponseResult updateRecord(@RequestBody UpdateBillDto billDto){
         return billService.updateRecord(billDto);
     }
+
+    @GetMapping("getCurMonthOutcome")
+    @ApiOperation(value = "获取当月支出账单数据")
+    public ResponseResult getCurMonthOutcome(){
+        return billService.getCurMonthOutcome();
+    }
+
+    @GetMapping("getCurMonthRecord")
+    @ApiOperation(value = "获取当月的账单数据")
+    public ResponseResult getCurMonthRecord(){
+        return billService.getCurMonthRecord();
+    }
+
+    @GetMapping("getMonthRecord/{date}")
+    @ApiOperation(value = "按月获取账单数据")
+    public ResponseResult getMonthRecord(@PathVariable("date")String date){
+        return billService.getMonthRecord(date);
+    }
+
+    @GetMapping("getRecordByAccount/{aid}")
+    @ApiOperation(value = "按账户获取账单记录")
+    public ResponseResult getRecordByAccount(@PathVariable("aid")Long aid){
+        return billService.getRecordByAccount(aid);
+    }
 }

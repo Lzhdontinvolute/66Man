@@ -24,5 +24,7 @@ public interface AccountService extends IService<Account> {
     ResponseResult queryById(Long aid);
 
     Account getDefaultAccount();
+
+    ResponseResult needNotified();
 }
 

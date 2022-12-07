@@ -1,13 +1,20 @@
 package com.lzh.financial.code.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.convert.Convert;
-import cn.hutool.core.util.NumberUtil;
+import cn.hutool.core.date.CalendarUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.map.MapUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.json.JSONConverter;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.datatype.jsr310.DecimalUtils;
 import com.lzh.financial.code.constants.SystemConstants;
 import com.lzh.financial.code.dao.*;
 import com.lzh.financial.code.domain.ResponseResult;
@@ -16,23 +23,26 @@ import com.lzh.financial.code.domain.dto.BillDto;
 import com.lzh.financial.code.domain.dto.UpdateBillDto;
 import com.lzh.financial.code.domain.entity.Account;
 import com.lzh.financial.code.domain.entity.Bill;
-import com.lzh.financial.code.domain.vo.AccountVo;
 import com.lzh.financial.code.domain.vo.BillVo;
 import com.lzh.financial.code.domain.vo.PageVo;
+import com.lzh.financial.code.domain.Value;
+import com.lzh.financial.code.domain.vo.RecordVo;
 import com.lzh.financial.code.enums.AppHttpCodeEnum;
-import com.lzh.financial.code.service.AccountService;
+import com.lzh.financial.code.exception.SystemException;
 import com.lzh.financial.code.service.BillService;
 import com.lzh.financial.code.utils.BeanCopyUtils;
 import com.lzh.financial.code.utils.IDMaker;
+import com.lzh.financial.code.utils.MapKeyComparator;
 import com.lzh.financial.code.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.lzh.financial.code.enums.AppHttpCodeEnum.DELETE_FAIL;
@@ -59,6 +69,22 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
     @Override
     @Transactional
     public ResponseResult addBill(BillDto billDto) {
+        // 非空判断
+        if(ObjectUtil.isNull(billDto.getCategoryId())){
+            throw new SystemException(AppHttpCodeEnum.CATEGORY_NOT_NULL);
+        }
+        if(ObjectUtil.isNull(billDto.getTagId())){
+            throw new SystemException(AppHttpCodeEnum.TAG_NOT_NULL);
+        }
+        if(ObjectUtil.isNull(billDto.getAccountId())){
+            throw new SystemException(AppHttpCodeEnum.ACCOUNT_NOT_NULL);
+        }
+        if(ObjectUtil.isNull(billDto.getAmount())){
+            throw new SystemException(AppHttpCodeEnum.AMOUNT_NOT_NULL);
+        }
+        if(ObjectUtil.isNull(billDto.getRecordTime())){
+            throw new SystemException(AppHttpCodeEnum.RECORD_TIME_NOT_NULL);
+        }
         //获取当前登陆用户信息
         Long userId = SecurityUtils.getUserId();
         //转换，保存传入的订单信息
@@ -94,6 +120,7 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
         save(bill);
         return ResponseResult.okResult("添加成功");
     }
+
 
     @Override
     public ResponseResult listAllRecord(Integer pageNum, Integer pageSize,String accountName) {
@@ -194,7 +221,7 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
         Long newAid = billDto.getAid();
         //如果新旧账户不一样，就说明修改了账户，那么就要改变账户信息
         if (!oldAid.equals(newAid)){
-            if (billDto.getCategoryType().equals(SystemConstants.INCOME)){
+            if (billDto.getCategoryId().equals(SystemConstants.INCOME)){
                 //如果是收入类型，如果改变了账户，那么就更新账户金额信息
                 //新账户加上该收入
                 Account newAccount = accountDao.selectById(newAid);
@@ -209,7 +236,7 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
                         .set("amount",oldAccount.getAmount().subtract(billDto.getOldAmount()));
                 accountDao.update(null,oldAccountUpdateWrapper);
             }
-            if(billDto.getCategoryType().equals(SystemConstants.OUTCOME)){
+            if(billDto.getCategoryId().equals(SystemConstants.OUTCOME)){
                 //如果是收入类型，如果改变了账户，那么就更新账户金额信息
                 //新帐户减去该支出
                 Account newAccount = accountDao.selectById(newAid);
@@ -226,7 +253,7 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
             }
         }else{
             //如果没有更改账户信息，仅仅更改金额或者时间，那就更新对应账户的金额
-            if (billDto.getCategoryType().equals(SystemConstants.INCOME)){
+            if (billDto.getCategoryId().equals(SystemConstants.INCOME)){
 
                 Account account = accountDao.selectById(newAid);
                 UpdateWrapper<Account> accountUpdateWrapper = new UpdateWrapper<>();
@@ -246,7 +273,7 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
                     accountDao.update(null,accountUpdateWrapper);
                 }
             }
-            if(billDto.getCategoryType().equals(SystemConstants.OUTCOME)){
+            if(billDto.getCategoryId().equals(SystemConstants.OUTCOME)){
 
                 Account account = accountDao.selectById(newAid);
                 UpdateWrapper<Account> accountUpdateWrapper = new UpdateWrapper<>();
@@ -276,6 +303,233 @@ public class BillServiceImpl extends ServiceImpl<BillDao, Bill> implements BillS
             return ResponseResult.okResult();
         }
         return ResponseResult.errorResult(UPDATE_FAIL.getCode(), UPDATE_FAIL.getMsg());
+    }
+
+    @Override
+    public ResponseResult getCurMonthOutcome() {
+        Long userId = SecurityUtils.getUserId();
+        HashMap<String, BigDecimal> daysOutcome = new HashMap<>();
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        ArrayList<Value> values = new ArrayList<>();
+        // 当前时间信息
+        LambdaQueryWrapper<Bill> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Bill::getUid,userId)
+                .eq(Bill::getDelFlag,SystemConstants.DEL_FLG_NORMAL)
+                .eq(Bill::getCategoryId,SystemConstants.OUTCOME)
+                .apply("MONTH(record_time) = MONTH(NOW())")
+                .orderBy(true,true,Bill::getRecordTime);
+        List<Bill> bills = baseMapper.selectList(queryWrapper);
+        bills.stream()
+                .map(bill -> {
+                    String timeStr = format.format(bill.getRecordTime());
+                    if (daysOutcome.containsKey(timeStr)){
+                        daysOutcome.put(timeStr,bill.getAmount().add(daysOutcome.get(timeStr)));
+                    }
+                    else{
+                        daysOutcome.put(timeStr,bill.getAmount());
+                    }
+                    return daysOutcome;
+                })
+                .forEach(a-> System.out.println());
+        for (Map.Entry<String,BigDecimal> entry : daysOutcome.entrySet()){
+            Value value = new Value();
+            value.setTime(entry.getKey());
+            value.setValue(entry.getValue());
+            values.add(value);
+        }
+        //values按时间排序
+        ListUtil.sortByProperty(values,"time");
+        return ResponseResult.okResult(values);
+    }
+
+    @Override
+    public ResponseResult getCurMonthRecord() {
+        Long userId = SecurityUtils.getUserId();
+        LambdaQueryWrapper<Bill> billLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        billLambdaQueryWrapper.eq(Bill::getUid,userId)
+                .eq(Bill::getDelFlag,SystemConstants.DEL_FLG_NORMAL)
+                .apply("MONTH(record_time) = MONTH(NOW())");
+        List<Bill> bills = list(billLambdaQueryWrapper);
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        List<BillVo> billVos = BeanCopyUtils.copyBeanList(bills, BillVo.class);
+        List<BillVo> vos = billVos.stream()
+                //获取账户名
+                .map(billVo -> billVo.setAccountName(accountDao.queryAccountByAid(billVo.getAccountId())))
+                //获取操作名
+                .map(billVo -> billVo.setCategoryName(categoryDao.queryCategoryById(billVo.getCategoryId())))
+                //获取标签名
+                .map(billVo -> billVo.setTagName(tagDao.queryTagById(billVo.getTagId())))
+//                //获取对应余额
+//                .map(billVo -> billVo.setCurBalance(accountDao.queryAmountByAid(billVo.getAid()).subtract(billVo.getAmount())))
+                .collect(Collectors.toList());
+        ListUtil.sortByProperty(vos,"recordTime");
+        HashMap<String, List<BillVo>> billMap = new HashMap<>();
+//        vos.stream()
+//                .map(billVo -> {
+//                    String timeStr = format.format(billVo.getRecordTime());
+//                    if(CollUtil.isEmpty(billMap.get(timeStr))){
+//                        List<BillVo> tempList = new ArrayList<>();
+//                        tempList.add(billVo);
+//                        billMap.put(timeStr,tempList);
+//                    }
+//                    billMap.get(timeStr).add(billVo);
+//                    return billMap;
+//                })
+//                .forEach(map-> System.out.println(map.toString()));
+
+        for(BillVo billVo:vos){
+            String timeStr = format.format(billVo.getRecordTime());
+            if(CollUtil.isEmpty(billMap.get(timeStr))){
+                List<BillVo> tempList = new ArrayList<>();
+                tempList.add(billVo);
+                billMap.put(timeStr,tempList);
+            }else {
+                billMap.get(timeStr).add(billVo);
+            }
+
+        }
+        if (billMap.isEmpty()){
+            return ResponseResult.okResult();
+        }
+        Map<String, List<BillVo>> sortMapByKey = sortMapByKey(billMap);
+        ArrayList<RecordVo> recordVos = new ArrayList<>();
+        for (Map.Entry<String,List<BillVo>> item : sortMapByKey.entrySet()){
+            RecordVo recordVo = new RecordVo();
+            recordVo.setTime(item.getKey());
+            recordVo.setChildren(item.getValue());
+            BigDecimal income = BigDecimal.ZERO;
+            BigDecimal outcome = BigDecimal.ZERO;
+            for (BillVo bv:item.getValue()){
+                if (bv.getCategoryId().equals(SystemConstants.INCOME)){
+                    income = income.add(bv.getAmount());
+                }
+                else if (bv.getCategoryId().equals(SystemConstants.OUTCOME)){
+                    outcome = outcome.add(bv.getAmount());
+                }
+            }
+            recordVo.setIncome(income);
+            recordVo.setOutcome(outcome);
+            recordVos.add(recordVo);
+        }
+
+        return ResponseResult.okResult(recordVos);
+    }
+
+    @Override
+    public ResponseResult getMonthRecord(String date) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        Long userId = SecurityUtils.getUserId();
+        LambdaQueryWrapper<Bill> billLambdaQueryWrapper = new LambdaQueryWrapper<>();
+        try {
+            Date parseDate = format.parse(date);
+            System.out.println(DateUtil.month(parseDate));
+            System.out.println(DateUtil.year(parseDate));
+            billLambdaQueryWrapper.eq(Bill::getUid,userId)
+                    .eq(Bill::getDelFlag,SystemConstants.DEL_FLG_NORMAL)
+                    .apply("MONTH(record_time) = {0}", DateUtil.month(parseDate)+1)
+                    .apply("YEAR(record_time) = {0}",DateUtil.year(parseDate));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+
+        List<Bill> bills = list(billLambdaQueryWrapper);
+
+        List<BillVo> billVos = BeanCopyUtils.copyBeanList(bills, BillVo.class);
+        List<BillVo> vos = billVos.stream()
+                //获取账户名
+                .map(billVo -> billVo.setAccountName(accountDao.queryAccountByAid(billVo.getAccountId())))
+                //获取操作名
+                .map(billVo -> billVo.setCategoryName(categoryDao.queryCategoryById(billVo.getCategoryId())))
+                //获取标签名
+                .map(billVo -> billVo.setTagName(tagDao.queryTagById(billVo.getTagId())))
+//                //获取对应余额
+//                .map(billVo -> billVo.setCurBalance(accountDao.queryAmountByAid(billVo.getAid()).subtract(billVo.getAmount())))
+                .collect(Collectors.toList());
+        ListUtil.sortByProperty(vos,"recordTime");
+        HashMap<String, List<BillVo>> billMap = new HashMap<>();
+//        vos.stream()
+//                .map(billVo -> {
+//                    String timeStr = format.format(billVo.getRecordTime());
+//                    if(CollUtil.isEmpty(billMap.get(timeStr))){
+//                        List<BillVo> tempList = new ArrayList<>();
+//                        tempList.add(billVo);
+//                        billMap.put(timeStr,tempList);
+//                    }
+//                    billMap.get(timeStr).add(billVo);
+//                    return billMap;
+//                })
+//                .forEach(map-> System.out.println(map.toString()));
+
+        for(BillVo billVo:vos){
+            String timeStr = format.format(billVo.getRecordTime());
+            if(CollUtil.isEmpty(billMap.get(timeStr))){
+                List<BillVo> tempList = new ArrayList<>();
+                tempList.add(billVo);
+                billMap.put(timeStr,tempList);
+            }else {
+                billMap.get(timeStr).add(billVo);
+            }
+
+        }
+        if (billMap.isEmpty()){
+            return ResponseResult.okResult();
+        }
+        Map<String, List<BillVo>> sortMapByKey = sortMapByKey(billMap);
+        ArrayList<RecordVo> recordVos = new ArrayList<>();
+        for (Map.Entry<String,List<BillVo>> item : sortMapByKey.entrySet()){
+            RecordVo recordVo = new RecordVo();
+            recordVo.setTime(item.getKey());
+            recordVo.setChildren(item.getValue());
+            BigDecimal income = BigDecimal.ZERO;
+            BigDecimal outcome = BigDecimal.ZERO;
+            for (BillVo bv:item.getValue()){
+                if (bv.getCategoryId().equals(SystemConstants.INCOME)){
+                    income = income.add(bv.getAmount());
+                }
+                else if (bv.getCategoryId().equals(SystemConstants.OUTCOME)){
+                    outcome = outcome.add(bv.getAmount());
+                }
+            }
+            recordVo.setIncome(income);
+            recordVo.setOutcome(outcome);
+            recordVos.add(recordVo);
+        }
+        return ResponseResult.okResult(recordVos);
+    }
+
+    @Override
+    public ResponseResult getRecordByAccount(Long aid) {
+        Long userId = SecurityUtils.getUserId();
+        LambdaQueryWrapper<Bill> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Bill::getDelFlag,SystemConstants.DEL_FLG_NORMAL)
+                .eq(Bill::getAccountId,aid);
+        List<Bill> list = list(queryWrapper);
+        List<BillVo> billVos = BeanCopyUtils.copyBeanList(list, BillVo.class);
+        List<BillVo> vos = billVos.stream()
+                //获取账户名
+                .map(billVo -> billVo.setAccountName(accountDao.queryAccountByAid(billVo.getAccountId())))
+                //获取操作名
+                .map(billVo -> billVo.setCategoryName(categoryDao.queryCategoryById(billVo.getCategoryId())))
+                //获取标签名
+                .map(billVo -> billVo.setTagName(tagDao.queryTagById(billVo.getTagId())))
+//                //获取对应余额
+//                .map(billVo -> billVo.setCurBalance(accountDao.queryAmountByAid(billVo.getAid()).subtract(billVo.getAmount())))
+                .collect(Collectors.toList());
+        return ResponseResult.okResult(vos);
+    }
+
+    public static <T> Map<String, T> sortMapByKey(Map<String, T> map) {
+        if (map == null || map.isEmpty()) {
+            return null;
+        }
+
+        Map<String, T> sortMap = new TreeMap<String, T>(
+                new MapKeyComparator());
+
+        sortMap.putAll(map);
+
+        return sortMap;
     }
 
 }

@@ -1,6 +1,6 @@
 package com.lzh.financial.code.filter;
 
-import com.alibaba.fastjson.JSON;
+import cn.hutool.json.JSONUtil;
 
 import com.lzh.financial.code.domain.LoginUser;
 import com.lzh.financial.code.domain.ResponseResult;
@@ -15,6 +15,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
+import springfox.documentation.spring.web.json.Json;
 
 
 import javax.servlet.FilterChain;
@@ -44,7 +45,7 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
         } catch (Exception exception) {
             exception.printStackTrace();
             ResponseResult result = ResponseResult.errorResult(AppHttpCodeEnum.NEED_LOGIN);
-            WebUtils.renderString(httpServletResponse, JSON.toJSONString(result));
+            WebUtils.renderString(httpServletResponse, JSONUtil.toJsonStr(result));
             return;
         }
 

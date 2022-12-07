@@ -5,11 +5,10 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 @Data
 @Accessors(chain = true)
-public class AccountVo {
+public class CreditAccountVo {
     private Long id;
 
     private Integer typeId;
@@ -20,20 +19,13 @@ public class AccountVo {
 
     private BigDecimal threshold;
 
-    //账单日
-    private Integer billingDay;
+    private Date billingDay;
 
-    //还款日
-    private Integer repaymentDay;
+    private Date repaymentDay;
 
     private Integer warn;
 
     private String remark;
 
     private BigDecimal amount;
-
-    private BigDecimal lastAmount;
-
-    private List<BillVo> children;
-
 }

@@ -24,6 +24,10 @@
         FROM tag,category,account,bill
         WHERE bill.account_id=account.id AND bill.category_id=category.id AND bill.tag_id=tag.id
     </select>
-   
+
+    <select id="listCurMonthRecord" resultMap="BillMap">
+        SELECT * FROM bill
+        WHERE MONTH(record_time) = MONTH(NOW()) AND uid=#{userid} AND del_flag=0
+    </select>
 </mapper>
 

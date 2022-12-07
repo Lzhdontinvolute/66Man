@@ -5,12 +5,13 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Date;
 
 @Data
 @Accessors(chain = true)
-public class BillVo {
+public class BillVo implements Serializable {
 
     //账单id
     private Long bid;

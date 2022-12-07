@@ -1,6 +1,7 @@
 package com.lzh.financial.code.controller;
 
 import com.lzh.financial.code.domain.ResponseResult;
+import com.lzh.financial.code.service.AccountService;
 import com.lzh.financial.code.service.CategoryService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,9 +18,13 @@ public class CategoryController {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    private AccountService accountService;
+
     @GetMapping("/category/listAllCategory")
     @ApiOperation(value = "查询所有分类")
     public ResponseResult listAllCategory(){
         return categoryService.queryCategoryAndTag();
     }
+
 }

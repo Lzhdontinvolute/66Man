@@ -31,4 +31,8 @@ public class SystemConstants
     public static final Integer OUTCOME = 2;
     public static final Integer NEED_WARN = 1;
     public static final Integer NO_NEED_WARN = 0;
+    public static final Integer CREDIT_ACCOUNT = 3;
+    public static final String IS_NEW = "0";
+
+    public static final String IS_NOT_NEW = "1";
 }

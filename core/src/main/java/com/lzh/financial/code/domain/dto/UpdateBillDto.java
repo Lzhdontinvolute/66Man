@@ -15,11 +15,11 @@ public class UpdateBillDto {
 
     private Long aid;
     //标签名
-    private Integer tagType;
+    private Integer tagId;
     //记账类型
-    private Integer categoryType;
+    private Integer categoryId;
     //账户类型
-    private Integer accountType;
+    private Integer accountId;
     //数额
     private BigDecimal oldAmount;
     private BigDecimal amount;

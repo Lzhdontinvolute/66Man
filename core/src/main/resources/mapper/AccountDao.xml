@@ -8,6 +8,8 @@
         <result property="name" column="name" jdbcType="VARCHAR"/>
         <result property="amount" column="amount" jdbcType="DECIMAL"/>
         <result property="threshold" column="threshold" jdbcType="DECIMAL"/>
+        <result property="billingDay" column="billing_day" jdbcType="INTEGER"/>
+        <result property="repaymentDay" column="repayment_day" jdbcType="INTEGER"/>
         <result property="warn" column="warn" jdbcType="TINYINT"/>
 <!--        <result property="balance" column="balance" jdbcType="DECIMAL"/>-->
         <result property="typeId" column="type_id" jdbcType="TINYINT"/>

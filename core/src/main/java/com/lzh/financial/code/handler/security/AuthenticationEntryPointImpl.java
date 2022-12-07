@@ -1,7 +1,8 @@
 package com.lzh.financial.code.handler.security;
 
-import com.alibaba.fastjson.JSON;
+//import com.alibaba.fastjson.JSON;
 
+import cn.hutool.json.JSONUtil;
 import com.lzh.financial.code.domain.ResponseResult;
 import com.lzh.financial.code.enums.AppHttpCodeEnum;
 import com.lzh.financial.code.utils.WebUtils;
@@ -31,7 +32,7 @@ public class AuthenticationEntryPointImpl implements AuthenticationEntryPoint {
         }else{
             result = ResponseResult.errorResult(AppHttpCodeEnum.SYSTEM_ERROR.getCode(),"授权失败");
         }
-        String json = JSON.toJSONString(result);
+        String json = JSONUtil.toJsonStr(result);
         //处理异常
         WebUtils.renderString(httpServletResponse,json);
     }

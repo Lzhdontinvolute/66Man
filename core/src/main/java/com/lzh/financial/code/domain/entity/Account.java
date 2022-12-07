@@ -29,7 +29,13 @@ public class Account extends Model<Account> {
     private String name;
     //额度
     private BigDecimal amount;
+    private BigDecimal lastAmount;
     private BigDecimal threshold;
+    //账单日
+    private Integer billingDay;
+
+    //还款日
+    private Integer repaymentDay;
     private Integer warn;
     //账户类型id
     @TableField(value = "type_id")

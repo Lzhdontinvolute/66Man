@@ -84,10 +84,10 @@ public class AtypeServiceImpl extends ServiceImpl<AtypeDao, Atype> implements At
         //判断父子类型
         wrapper.eq(Account::getTypeId,tid);
         wrapper.eq(Account::getDelFlag,SystemConstants.DEL_FLG_NORMAL);
-        if (userId!=1L){
+//        if (userId!=1L){
             //如果不是管理员，那么就只获取当前用户的账户类型
             wrapper.eq(Account::getUid,userId);
-        }
+//        }
         List<Account> accountList = accountDao.selectList(wrapper);
         return accountList;
     }

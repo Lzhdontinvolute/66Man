@@ -9,11 +9,17 @@ import org.python.core.PyList;
 import org.python.core.PyObject;
 import org.python.util.PythonInterpreter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.util.StringUtils;
 
+import javax.mail.MessagingException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Scanner;
 
@@ -59,4 +65,6 @@ public class test {
         interpreter.close();
 
     }
+
+
 }

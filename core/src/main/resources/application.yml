@@ -21,6 +21,14 @@ spring:
     host: 127.0.0.1
     password:
     port: 6379
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+
+
 
 logging:
   level:

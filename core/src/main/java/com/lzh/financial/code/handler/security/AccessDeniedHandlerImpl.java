@@ -1,7 +1,9 @@
 package com.lzh.financial.code.handler.security;
 
-import com.alibaba.fastjson.JSON;
+//import com.alibaba.fastjson.JSON;
 
+import cn.hutool.json.JSON;
+import cn.hutool.json.JSONUtil;
 import com.lzh.financial.code.domain.ResponseResult;
 import com.lzh.financial.code.enums.AppHttpCodeEnum;
 import com.lzh.financial.code.utils.WebUtils;
@@ -20,7 +22,7 @@ public class AccessDeniedHandlerImpl implements AccessDeniedHandler {
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
         accessDeniedException.printStackTrace();
         ResponseResult result = ResponseResult.errorResult(AppHttpCodeEnum.NO_OPERATOR_AUTH);
-        String json = JSON.toJSONString(result);
+        String json = JSONUtil.toJsonStr(result);
         //处理异常
         WebUtils.renderString(response,json);
     }
